@@ -1,6 +1,6 @@
 {
   "name": "node-firebird",
-  "version": "0.7.0",
+  "version": "0.7.2",
   "description": "Pure JavaScript and Asynchronous Firebird client for Node.js.",
   "keywords": [
     "firebird",
@@ -27,5 +27,8 @@
       "type" : "MPL-2.0",
       "url": "https://raw.githubusercontent.com/hgourvest/node-firebird/master/LICENSE"
     }
-  ]
+  ],
+  "dependencies": {
+      "long": "^2.2.5"
+  }
 }
