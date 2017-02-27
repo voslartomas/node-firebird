@@ -14,6 +14,16 @@ __Firebird database on social networks__
 - [Firebird on Twitter](https://twitter.com/firebirdsql/)
 - [Firebird on Facebook](https://www.facebook.com/FirebirdSQL)
 
+__Changelog for version v0.9.x__
+
+- Better blob management (warning API Breaking Changes)
+- Much unit-test
+- Better sequentially select (warning API Breaking Changes)
+- Added transation.sequentially
+- Bugs correction
+
+---
+
 __Changelog for version v0.2.x__
 
 - added auto-reconnect
@@ -116,7 +126,7 @@ pool.destroy();
 
 - `db.query(query, [params], function(err, result))` - classic query, returns Array of Object
 - `db.execute(query, [params], function(err, result))` - classic query, returns Array of Array
-- `db.sequentially(query, [params], function(row, index), function(err), asArray)` - sequentially query
+- `db.sequentially(query, [params], function(row, index, next), function(err), asArray)` - sequentially query
 - `db.detach(function(err))` detach a database
 - `db.transaction(isolation, function(err, transaction))` create transaction
 
@@ -124,7 +134,7 @@ pool.destroy();
 
 - `transaction.query(query, [params], function(err, result))` - classic query, returns Array of Object
 - `transaction.execute(query, [params], function(err, result))` - classic query, returns Array of Array
-- `transaction.sequentially(query, [params], function(row, index), function(err), asArray)` - sequentially query
+- `transaction.sequentially(query, [params], function(row, index, next), function(err), asArray)` - sequentially query
 - `transaction.commit(function(err))` commit current transaction
 - `transaction.rollback(function(err))` rollback current transaction
 
