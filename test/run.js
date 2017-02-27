@@ -18,7 +18,8 @@ var config = {
     password: 'masterkey', // default
     role: null,            // default
     pageSize: 4096,        // default when creating database
-    timeout: 3000          // default query timeout
+    timeout: 3000,         // default query timeout
+    lowercase_keys : true
 }
 
 Array.prototype.async = function(cb) {
@@ -498,7 +499,7 @@ function test_pooling(next) {
 
     query.push(function(next) {
         setTimeout(function() {
-            assert.ok(pool.db === 0, 'pool detach');
+            assert.ok(pool.dbinuse === 0, 'pool detach');
             console.timeEnd(name);
             next();
         }, 1000);
