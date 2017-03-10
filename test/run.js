@@ -53,6 +53,7 @@ fb.attachOrCreate(config, function(err, db) {
     task.push(test_insert);
     task.push(test_reconnect);
     task.push(test_select_insert); // for inserted rows
+    task.push(test_select_with_error);
     task.push(test_update);
     task.push(test_select_update); // for updated rows
     task.push(test_transaction);
@@ -75,18 +76,33 @@ function test_create(next) {
     console.time(name);
 
     // Create table
-    database.query('CREATE TABLE test (ID INT, PARENT BIGINT, NAME VARCHAR(50), FILE BLOB, CREATED TIMESTAMP)', function(err) {
+    database.query('CREATE TABLE test (ID INT, PARENT BIGINT, NAME VARCHAR(50), FILE BLOB, CREATED TIMESTAMP)', function (err) {
         assert.ok(!err, name + ': create table ' + err);
-
         // Check if table exists
-        database.query('SELECT COUNT(*) FROM test', function(err, r) {
+        database.query('SELECT COUNT(*) FROM test', function (err, r) {
             assert.ok(!err, name + ': check existing of table ' + err);
-
             assert.ok(r[0].count === 0, name + ': check rows in new table');
-            console.timeEnd(name);
-
-            // Next test
-            next();
+            // create exception
+            database.query("CREATE EXCEPTION RAISEEXCEPTION 'message'", function (err, r) {
+                assert.ok(!err, name + ': check existing of exception ' + err);
+                // Create stored proc
+                database.query("create or alter procedure TEST_ERROR_DURING_FETCH "
+                    + " returns ("
+                    + " MSG varchar(200))"
+                    + " AS"
+                    + " declare variable dbpath varchar(100);"
+                    + " declare variable dbpass varchar(100);"
+                    + " begin"
+                    + " msg = 'oupsss';"
+                    + " suspend;"
+                    + " exception raiseexception('bug');"
+                    + " end", function (err) {
+                        assert.ok(!err, name + ': check existing of stored procedure ' + err);
+                        console.timeEnd(name);
+                        // Next test
+                        next();
+                    });
+            });
         });
     });
 }
@@ -180,6 +196,19 @@ function test_update(next) {
         next();
     });
 
+}
+
+function test_select_with_error(next) {
+
+    var name = 'TEST ---> test_select_with_error';
+    console.time(name);
+
+    database.query('SELECT * FROM TEST_ERROR_DURING_FETCH', function (err, r) {
+        assert.ok(err, name + ': problem no error');
+        assert.ok(!r, name + ': got data');
+        console.timeEnd(name);
+        next();
+    })
 }
 
 function test_select_insert(next) {
