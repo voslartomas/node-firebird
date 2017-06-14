@@ -22,6 +22,8 @@ var config = {
     lowercase_keys: true
 }
 
+var database = null;
+
 Array.prototype.async = function(cb) {
 
     var self = this;
@@ -57,6 +59,8 @@ fb.attachOrCreate(config, function(err, db) {
     task.push(test_update);
     task.push(test_select_update); // for updated rows
     task.push(test_transaction);
+    task.push(test_gds_error);
+    task.push(test_transaction_params);
 
     task.push(function(next) {
         db.detach(next);
@@ -663,4 +667,84 @@ function test_pooling(next) {
     setTimeout(function() {
         query.async(next);
     }, 1000);
+}
+
+function test_gds_error(next) {
+    const
+        ERR_EXCEPT = 335544517,
+        ERR_DSQL_ERROR = 335544569,
+        ERR_NO_METADATA_UPDATE = 335544351;
+
+    var name = 'TEST ---> gds_error';
+    console.time(name);
+
+    var query = [];
+
+    // Test 'user exception' error code
+    query.push(function (next) {
+        var sql = 'EXECUTE BLOCK AS BEGIN EXCEPTION RAISEEXCEPTION; END';
+        database.query(sql, [], function (err, r) {
+            assert.ok(err, name + ': exception was not thrown ' + err);
+            assert.ok(err.code === ERR_EXCEPT, name + ': GDS exception has invalid code "' + err.code + '": ' + err);
+            next();
+        });
+    });
+
+    // Test 'Dynamic SQL Error' error code
+    query.push(function (next) {
+        var sql = 'SELECT * FROM invalid_table';
+        database.query(sql, [], function (err, r) {
+            assert.ok(err, name + ': exception was not thrown ' + err);
+            assert.ok(err.code === ERR_DSQL_ERROR, name + ': GDS exception has invalid code "' + err.code + '": ' + err);
+            next();
+        });
+    });
+
+    // Test 'Unsuccessful metadata update' error code
+    query.push(function (next) {
+        var sql = 'CREATE TABLE test (ID INT)';
+        database.query(sql, [], function (err, r) {
+            assert.ok(err, name + ': exception was not thrown ' + err);
+            assert.ok(err.code === ERR_NO_METADATA_UPDATE, name + ': GDS exception has invalid code "' + err.code + '": ' + err);
+            next();
+        });
+    });
+
+    query.async(function () {
+        console.timeEnd(name);
+        next();
+    });
+}
+
+function test_transaction_params(next) {
+    // recommended params for long working readonly transaction,
+    //   that doesn't hold record versions and server transaction counters
+    const ISOLATION_READ = [
+        fb.ISC_TPB.version3,
+        fb.ISC_TPB.read,
+        fb.ISC_TPB.read_committed,
+        fb.ISC_TPB.rec_version
+    ];
+    const ERR_READ_ONLY_TRANS = 335544361;
+
+    var name = 'TEST ---> test_transaction_params';
+    console.time(name);
+
+    var query = [];
+
+    // Read transaction cannot write
+    query.push(function (next) {
+        database.transaction(ISOLATION_READ, function (err, transaction) {
+            transaction.query('INSERT INTO test (ID, NAME) VALUES(?, ?)', [1, 'Transaction Read'], function (err) {
+                assert.ok(err, name + ': insert in read transaction was successful ' + err);
+                assert.ok(err.code === ERR_READ_ONLY_TRANS, name + ': GDS exception has invalid code "' + err.code + '": ' + err);
+                next();
+            });
+        });
+    });
+
+    query.async(function () {
+        console.timeEnd(name);
+        next();
+    });
 }
