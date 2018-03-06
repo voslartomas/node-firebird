@@ -1,6 +1,7 @@
 // Type definitions for node-firebird 0.8.3
 // Project: node-firebird
 // Definitions by: Marco Warm <https://github.com/MarcusCalidus>
+
 declare module 'node-firebird' {
     type DatabaseCallback = (err: any, db: Database) => void;
 
