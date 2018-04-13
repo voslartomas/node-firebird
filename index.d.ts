@@ -8,7 +8,7 @@ declare module 'node-firebird' {
     type TransactionCallback = (err: Options, transaction: Transaction) => void;
     type QueryCallback = (err: any, result: any[]) => void;
     type SimpleCallback = (err: any) => void;
-    type SequentialCallback = (row: any, index: number) => void;
+    type SequentialCallback = (row: any, index: number, next: any) => void;
 
     export const ISOLATION_READ_UNCOMMITTED: number[];
     export const ISOLATION_READ_COMMITED: number[];
@@ -23,14 +23,15 @@ declare module 'node-firebird' {
         transaction(isolation: Isolation, callback: TransactionCallback): void;
         query(query: string, params: any[], callback: QueryCallback): void;
         execute(query: string, params: any[], callback: QueryCallback): void;
-        sequentially(query: string, params: any[], rowCallback: SequentialCallback, callback: SimpleCallback): void;
+        sequentially(query: string, params: any[], rowCallback: SequentialCallback, callback: SimpleCallback, asArray?: boolean): void;
     }
 
     export interface Transaction {
         query(query: string, params: any[], callback: QueryCallback): void;
         execute(query: string, params: any[], callback: QueryCallback): void;
         commit(callback?: SimpleCallback): void;
-        rollback(callback?: SimpleCallback): void; 
+        rollback(callback?: SimpleCallback): void;
+        sequentially(query: string, params: any[], rowCallback: SequentialCallback, callback: SimpleCallback, asArray?: boolean): void;
     }
 
     export interface Options {
@@ -54,4 +55,5 @@ declare module 'node-firebird' {
     export function create(options: Options, callback: DatabaseCallback): void; 
     export function attachOrCreate(options: Options, callback: DatabaseCallback): void;
     export function pool(max: number,options: Options, callback: DatabaseCallback): ConnectionPool; 
+
 }
