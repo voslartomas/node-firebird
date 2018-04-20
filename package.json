@@ -18,18 +18,18 @@
     "email": "hgourvest@gmail.com"
   },
   "contributors": [
-      "Popa Marius Adrian <mapopa@gmail.com>",
-      "Peter \u0160irka <petersirka@gmail.com>",
-      "Arnaud Le Roy <https://github.com/sdnetwork>"
+    "Popa Marius Adrian <mapopa@gmail.com>",
+    "Peter Širka <petersirka@gmail.com>",
+    "Arnaud Le Roy <https://github.com/sdnetwork>"
   ],
   "main": "./lib",
-  "licenses" : [
+  "licenses": [
     {
-      "type" : "MPL-2.0",
+      "type": "MPL-2.0",
       "url": "https://raw.githubusercontent.com/hgourvest/node-firebird/master/LICENSE"
     }
   ],
   "dependencies": {
-      "long": "^2.2.5"
+    "long": "^2.2.5"
   }
 }
