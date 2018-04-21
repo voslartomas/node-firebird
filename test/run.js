@@ -61,6 +61,8 @@ fb.attachOrCreate(config, function(err, db) {
     task.push(test_transaction);
     task.push(test_gds_error);
     task.push(test_transaction_params);
+    task.push(test_biginsert_blob);
+    task.push(test_bigread_blob);
 
     task.push(function(next) {
         db.detach(next);
@@ -747,4 +749,53 @@ function test_transaction_params(next) {
         console.timeEnd(name);
         next();
     });
+}
+
+function test_biginsert_blob(next) {
+    var name = 'TEST ---> test_biginsert_blob';
+    console.time(name);
+    function insert(transaction, id, max, end) {
+        if (!transaction) {
+            database.transaction(function (err, transaction) {
+                assert.ok(!err, 'Transaction problem (' + id + ') ' + err);
+                ins(transaction);
+            })
+        } else {
+            ins(transaction);
+        }
+
+        function ins(transaction) {
+            transaction.query('INSERT INTO test (ID, NAME, FILE, CREATED) VALUES(?, ?, ?, ?) RETURNING ID', [id, 'Firebird 2', new Buffer("firebird is great"), '14.12.2014T12:12:12'], function (err, r) {
+                assert.ok(!err, 'Insert problem (' + id + ') ' + err);
+                if (id < max)
+                    if (id % 1000 == 0) {
+                        transaction.commit(function () {
+                            insert(null, id + 1, max, end);
+                        })
+                    } else
+                        insert(transaction, id + 1, max, end);
+                else
+                    end();
+            })
+        }
+    }
+
+    insert(null, 0, 20000, function () {
+        console.timeEnd(name);
+        next();
+    })
+}
+
+function test_bigread_blob(next) {
+    var name = 'TEST ---> test_bigread_blob';
+    console.time(name);
+    var t = setTimeout(() => {
+        assert.fail("Too long read probably blocked");
+    }, 20000);
+    database.query("SELECT ID,FILE FROM TEST", function (err, result) {
+        assert.ok(!err, 'Read problem' + err);
+        clearTimeout(t);
+        console.timeEnd(name);
+        next();
+    })
 }
